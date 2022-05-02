@@ -1,2 +1,3 @@
 _build/
 fpga_cart.bin
+*.gb
