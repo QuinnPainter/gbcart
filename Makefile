@@ -19,10 +19,6 @@ $(BUILD)/fpga_cart.json: src/fpga_cart.v
 	@mkdir -p $(dir $@)
 	yosys -q -p "synth_ice40 -json $(BUILD)/fpga_cart.json" src/fpga_cart.v
 
-.PHONY: flash
-flash:
-	iceprog -d i:0x0403:0x6014 fpga_cart.bin
-
 .PHONY: clean
 clean:
 	$(RM) -rf $(BUILD) fpga_cart.bin
