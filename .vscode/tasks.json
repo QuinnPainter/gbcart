@@ -13,10 +13,18 @@
             }
         },
         {
+            "label": "Test",
+            "type": "shell",
+            "command": "wsl make test",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
             "label": "Clean",
             "type": "shell",
             "command": "wsl make clean",
-            "group": "none"
+            "group": "none",
+            "problemMatcher": []
         },
         {
             "label": "Flash",

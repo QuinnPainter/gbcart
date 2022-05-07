@@ -1,24 +1,29 @@
-# Makefile to build UPduino v3.0 rgb_blink.v  with icestorm toolchain
-# Original Makefile is taken from: 
-# https://github.com/tomverbeure/upduino/tree/master/blink
-# On Linux, copy the included upduinov3.rules to /etc/udev/rules.d/ so that we don't have
-# to use sudo to flash the bit file.
-# Thanks to thanhtranhd for making changes to thsi makefile.
 
 BUILD    := _build
 
-fpga_cart.bin: $(BUILD)/fpga_cart.asc
-	@mkdir -p $(dir $@)
-	icepack $(BUILD)/fpga_cart.asc fpga_cart.bin
+all: fpga_cart.bin
 
-$(BUILD)/fpga_cart.asc: $(BUILD)/fpga_cart.json common/upduino.pcf
-	@mkdir -p $(dir $@)
-	nextpnr-ice40 --up5k --package sg48 --json $(BUILD)/fpga_cart.json --pcf common/upduino.pcf --asc $(BUILD)/fpga_cart.asc
+.SECONDARY: # prevents auto-deletion of intermediate files
 
-$(BUILD)/fpga_cart.json: src/fpga_cart.v
+%.bin: $(BUILD)/%.asc
 	@mkdir -p $(dir $@)
-	yosys -q -p "synth_ice40 -json $(BUILD)/fpga_cart.json" src/fpga_cart.v
+	icepack -s $< $@
+
+$(BUILD)/%.asc: $(BUILD)/%.json src/%.pcf
+	@mkdir -p $(dir $@)
+	nextpnr-ice40 --up5k --package sg48 --json $< --pcf src/$*.pcf --asc $@
+
+$(BUILD)/%.json: src/%.v
+	@mkdir -p $(dir $@)
+	yosys -q -p "read_verilog $<" -p "synth_ice40 -top top -json $@" -E $(BUILD)/$*.d
+
+test:
+	iverilog -D NO_ICE40_DEFAULT_ASSIGNMENTS -I src -o fpga_cart.vvp src/fpga_cart_test.v src/fpga_cart.v /usr/local/share/yosys/ice40/cells_sim.v
+	vvp fpga_cart.vvp
+	gtkwave fpga_cart_test.vcd
 
 .PHONY: clean
 clean:
-	$(RM) -rf $(BUILD) fpga_cart.bin
+	$(RM) -rf $(BUILD) fpga_cart.bin *.vvp *.vcd
+
+-include $(BUILD)/*.d

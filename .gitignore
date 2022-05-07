@@ -1,3 +1,6 @@
 _build/
 fpga_cart.bin
 *.gb
+*.gbc
+*.vvp
+*.vcd
