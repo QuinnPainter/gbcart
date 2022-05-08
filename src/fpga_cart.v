@@ -70,7 +70,7 @@ module spram_gbrom (
     input spi_miso
 );
 
-    reg [13:0] spram_init_addr; // address used when writing to the SPRAM
+    reg [14:0] spram_init_addr; // address used when writing to the SPRAM (extra bit so it can be negative)
     reg [15:0] spram_init_data; // data lines used when writing
 
     wire [15:0] rdata_16;
@@ -78,7 +78,7 @@ module spram_gbrom (
 
     SB_SPRAM256KA spram_inst(
         .DATAIN(spram_init_data),
-        .ADDRESS(rom_loaded ? addr[14:1] : spram_init_addr),
+        .ADDRESS(rom_loaded ? addr[14:1] : spram_init_addr[13:0]),
         .MASKWREN(4'b1111),
         .WREN(!rom_loaded),
         .CHIPSELECT(1'b1),
@@ -92,7 +92,7 @@ module spram_gbrom (
     reg [7:0] rst_cnt = 0; // generate startup reset signal
     wire rst_n = rst_cnt[7];
     always @(posedge clk) begin
-        if(!rst_n)
+        if (!rst_n)
             rst_cnt <= rst_cnt + 1;
     end
 
@@ -102,11 +102,15 @@ module spram_gbrom (
     wire spi_valid;
     wire spi_rdy;
 
+    reg [7:0] spi_data_buffer; // Data comes in bytes, so buffer one byte and combine them into one 16 bit num
+    reg spi_data_oddbyte;       // keep track of if we're on top or bottom byte
+
     initial begin
-        spram_init_addr = 0;
+        spram_init_addr = -1; // gets incremented to 0 on first iteration
         spi_addr = 24'h100000;
         spi_go = 0;
         rom_loaded = 0;
+        spi_data_oddbyte = 0;
     end
 
     spi_flash_reader spi_reader_inst (
@@ -118,7 +122,7 @@ module spram_gbrom (
     
    	    // Command interface
    	    .addr(spi_addr),
-   	    .len(16'h0000),
+   	    .len(16'h8000),
    	    .go(spi_go),
    	    .rdy(spi_rdy),
     
@@ -143,9 +147,13 @@ module spram_gbrom (
     always @(posedge clk) begin
         if(!rst_n) begin
         end else if(spi_valid & !rom_loaded) begin
-            spram_init_data <= spi_data; // 8 to 16 bt
-            spram_init_addr <= spram_init_addr + 1;
-            spi_addr <= spi_addr + 24'b1;
+            if (spi_data_oddbyte) begin
+                spram_init_data <= {spi_data, spi_data_buffer}; 
+            end else begin
+                spi_data_buffer <= spi_data;
+            end
+            spram_init_addr <= spram_init_addr + spi_data_oddbyte;
+            spi_data_oddbyte <= ~spi_data_oddbyte;
             if (spram_init_addr == 16383) begin
                 rom_loaded <= 1;
             end

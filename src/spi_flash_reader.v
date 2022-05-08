@@ -74,7 +74,7 @@ module spi_flash_reader (
    reg [2:0]                               cnt_bit;
    reg                                     cnt_bit_last;
 
-   reg [ 1:0]                              cnt_cmd;
+   reg [1:0]                               cnt_cmd;
    wire                                    cnt_cmd_last;
    wire                                    wake_last;
 
