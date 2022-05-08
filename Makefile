@@ -20,7 +20,7 @@ $(BUILD)/%.json: src/%.v
 test:
 	iverilog -D NO_ICE40_DEFAULT_ASSIGNMENTS -I src -o fpga_cart.vvp src/fpga_cart_test.v src/fpga_cart.v /usr/local/share/yosys/ice40/cells_sim.v
 	vvp fpga_cart.vvp
-	gtkwave fpga_cart_test.vcd
+#	gtkwave fpga_cart_test.vcd
 
 .PHONY: clean
 clean:

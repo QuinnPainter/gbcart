@@ -10,17 +10,16 @@ module fpga_cart_tb;
     wire spi_sck;
     wire spi_ssn;
     wire spi_mosi;
-    //reg spi_miso = 0;
-    wire spi_miso;
+    reg spi_miso = 0;
 
     initial begin // record to file
         $dumpfile("fpga_cart_test.vcd");
         $dumpvars(0, fpga_cart_tb);
     end
 
-    /*initial begin
-        #20000000 $finish;
-    end*/
+    initial begin
+        #80000000 $finish;
+    end
 
     always #42 clk = !clk;	// ~ 12 MHz
 
@@ -37,15 +36,6 @@ module fpga_cart_tb;
         .spi_ssn (spi_ssn),
         .spi_mosi (spi_mosi),
         .spi_miso (spi_miso)
-    );
-
-    sst25vf010A flsh_inst(
-        .WPn (1),	
-        .SO (spi_miso),
-        .HOLDn (1),
-        .SCK (spi_sck),
-        .CEn (spi_ssn),
-        .SI (spi_mosi)
     );
 
 endmodule

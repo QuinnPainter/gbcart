@@ -14,8 +14,14 @@ set_io -nowarn spi_cs 16 # Connected to SPI flash, drive high unless using SPI f
 # If using the FTDI MPSSE engine, the following signals apply
 set_io -nowarn spi_sck 15  # Shared with the flash
 set_io -nowarn spi_ssn 16  # Connected to SPI flash, drive high unless using SPI flash!
-set_io -nowarn spi_mosi 17 # Shared with the flash
-set_io -nowarn spi_miso 14 # Shared with the flash
+# https://github.com/tinyvision-ai-inc/UPduino-v3.0/blob/master/Board/v3.0/UPduino_v3.0.pdf
+# NOTE : looking at the Upduino diagram, these pins appear to be swapped so that FLASH_MOSI goes into FPGA_SO
+# when it's in Flash progamming mode (instead of CRAM.)
+# so I swapped these between pins 14 and 17.
+# This makes sense, so that the FTDI's output goes into flash input for programming.
+# Why the hell isn't this documented anywhere? Took so long to figure this out...
+set_io -nowarn spi_mosi 14 # Shared with the flash
+set_io -nowarn spi_miso 17 # Shared with the flash
 
 set_io -nowarn address[15] 2
 set_io -nowarn address[14] 46
