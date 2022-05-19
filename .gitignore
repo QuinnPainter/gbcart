@@ -1,6 +1,10 @@
 _build/
 fpga_cart.bin
+*.o
+*.map
+*.sym
 *.gb
 *.gbc
+# Icarus Verilog files
 *.vvp
 *.vcd

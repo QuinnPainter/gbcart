@@ -1,9 +1,12 @@
 
 BUILD    := _build
 
-all: fpga_cart.bin
+all: rom fpga_cart.bin
 
 .SECONDARY: # prevents auto-deletion of intermediate files
+
+rom:
+	$(MAKE) -C src/gb
 
 %.bin: $(BUILD)/%.asc
 	@mkdir -p $(dir $@)
