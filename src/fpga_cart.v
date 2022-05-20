@@ -20,7 +20,7 @@ module top (
     wire clk; // 48 MHz clock from FPGA
     SB_HFOSC u_SB_HFOSC (.CLKHFPU(1'b1), .CLKHFEN(1'b1), .CLKHF(clk));
 
-    wire [7:0] data_out;
+    wire [7:0] rom_out;
     reg output_enable = 1'd0;
     wire rom_loaded;
     assign gb_reset = rom_loaded;
@@ -31,7 +31,8 @@ module top (
     spram_gbrom spram_gbrom_inst (
         .clk (tmpclk),
         .addr (address[14:0]),
-        .read_data (data_out),
+        .read_data_active (address[15]),
+        .read_data (rom_out),
         .rom_loaded (rom_loaded),
         .spi_sck (spi_sck),
         .spi_ssn (spi_ssn),
@@ -40,16 +41,28 @@ module top (
     );
 
     // Enable data output if required, otherwise high-impedance
-    assign data = output_enable ? data_out : 8'bzzzzzzzz;
+    // Read from the tile array if in the cart RAM address range, otherwise read the ROM
+    assign data = output_enable ? (address[15:13] == 3'b101 ? gb_tile_out : rom_out) : 8'bzzzzzzzz;
     assign data_OE = output_enable;
+
+    reg[7:0] gb_tiles[20*18*8*2:0];
+    reg[7:0] gb_tile_out;
+
+    integer i;
+    initial begin
+        for (i = 0; i < 20*18*8*2; i = i + 1) begin
+            gb_tiles[i] = 8'b00110000;
+        end
+    end
 
     always @(posedge clk) begin
         if (rom_loaded == 1'b1) begin
-            // Don't output signal if WR, or address[15] are asserted
+            // Don't output signal if WR asserted or not in rom / cart RAM area
             // Or READ is not asserted
-            if(address[15] || nRD || ~nWR) begin
+            if((address[15] && (address[15:13] != 3'b101)) || nRD || ~nWR) begin
                 output_enable <= 1'd0;
             end else begin
+                gb_tile_out <= gb_tiles[address[12:0]];
                 output_enable <= 1'd1;
             end
         end
@@ -62,6 +75,7 @@ endmodule
 module spram_gbrom (
     input clk,
     input [14:0] addr,
+    input read_data_active,
     output [7:0] read_data,
     output reg rom_loaded,
     output spi_sck,
@@ -74,7 +88,7 @@ module spram_gbrom (
     reg [15:0] spram_init_data; // data lines used when writing
 
     wire [15:0] rdata_16;
-    assign read_data = addr[0] ? rdata_16[15:8] : rdata_16[7:0];
+    assign read_data = read_data_active ? 8'bz : (addr[0] ? rdata_16[15:8] : rdata_16[7:0]);
 
     SB_SPRAM256KA spram_inst(
         .DATAIN(spram_init_data),

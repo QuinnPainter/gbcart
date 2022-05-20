@@ -208,19 +208,7 @@ LCDInterrupt:
     reti
 
 SECTION "TempVidTestPattern", ROM0, ALIGN[4] ; must be aligned to 4 bits for HDMA
-TestPattern:
-REPT 18
-REPT 20
-DW `30000000
-DW `03000000
-DW `00300000
-DW `00030000
-DW `00003000
-DW `00000300
-DW `00000030
-DW `00000003
-ENDR
-ENDR
+DEF TestPattern EQU $A000
 tp2:
 REPT 18
 REPT 20
